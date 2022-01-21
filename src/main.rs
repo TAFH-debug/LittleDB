@@ -2,6 +2,7 @@ mod core;
 mod error;
 mod data_manager;
 mod launch;
+mod help;
 
 use std::fs::File;
 use std::io::{Write, BufReader, BufRead, Error, Read};
@@ -11,6 +12,8 @@ use crate::data_manager::decode;
 fn main() -> Result<(), Error> {
     let args: Vec<String> = std::env::args().collect();
 
+    launch::launch(args);
+    //TEST MODE
     {
         let mut file = File::create("data.txt")?;
         data_manager::create_database(file, "Users");
