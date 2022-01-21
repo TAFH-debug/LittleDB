@@ -1,0 +1,1 @@
+C:\Users\ashat\IdeaProjects\LittleDB\target\debug\DataBase.exe: C:\Users\ashat\IdeaProjects\LittleDB\src\core.rs C:\Users\ashat\IdeaProjects\LittleDB\src\data_manager.rs C:\Users\ashat\IdeaProjects\LittleDB\src\error.rs C:\Users\ashat\IdeaProjects\LittleDB\src\launch.rs C:\Users\ashat\IdeaProjects\LittleDB\src\main.rs
