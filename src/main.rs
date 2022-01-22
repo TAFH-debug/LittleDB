@@ -1,10 +1,11 @@
 mod core;
 mod error;
 mod data_manager;
-mod launch;
+mod launcher;
 mod help;
 
 use std::fs::File;
+use std::path::Path;
 use std::io::{Write, BufReader, BufRead, Error, Read};
 use crate::error::*;
 use crate::data_manager::decode;
@@ -12,11 +13,12 @@ use crate::data_manager::decode;
 fn main() -> Result<(), Error> {
     let args: Vec<String> = std::env::args().collect();
 
-    launch::launch(args);
+    launcher::launch(args);
     //TEST MODE
     {
-        let mut file = File::create("data.txt")?;
+        let mut file = "data.txt";
         data_manager::create_database(file, "Users");
+        data_manager::create_table(file, "example", ":int:string:");
     }
 
     {

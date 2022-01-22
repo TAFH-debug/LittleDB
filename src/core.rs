@@ -5,7 +5,3 @@ pub enum Keychar {
 
 pub fn parse_script(script: String) {
 }
-
-pub fn create_table(name: String, ) {
-
-}

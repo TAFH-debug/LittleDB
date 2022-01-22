@@ -12,7 +12,7 @@ impl Flags {
     fn flag_type(val: &str) -> FlagType {
         match val {
             Flags::MODE => FlagType::MODE,
-            Flags::HELP => FlagType::HELP,
+            Flags::HELP | "--help" => FlagType::HELP,
             Flags::PORT => FlagType::PORT,
             _ => FlagType::ERROR
         }
