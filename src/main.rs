@@ -8,7 +8,7 @@ use std::fs::File;
 use std::path::Path;
 use std::io::{Write, BufReader, BufRead, Error, Read};
 use crate::error::*;
-use crate::data_manager::decode;
+use crate::core::decode;
 
 fn main() -> Result<(), Error> {
     let args: Vec<String> = std::env::args().collect();
