@@ -2,3 +2,8 @@
 name = "LittleDB"
 version = "0.1.0"
 edition = "2021"
+authors = ["TAFH"]
+
+[dependencies]
+clap = { version = "3.0.13", features = ["derive"] }
+json = "0.12.4"

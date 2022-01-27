@@ -12,13 +12,14 @@ pub fn accept(request: ModuleRequest<BCRequestType>) -> Result<(), ()> {
     match request.value {
         BCRequestType::CreateObject => {
 
-        }
-        BCRequestType::InitDatabase => {
+        },
+        BCRequestType::InitDatabase => unsafe {
             super::address_manager::init_database();
         },
-        BCRequestType::CreateTable => {
+        BCRequestType::CreateTable => unsafe {
             let param = request.params.first().expect("Empty params.");
-            super::address_manager::create_table(param.value.clone());
+            let param2 = request.params.get(1).expect("Params must be two.");
+            super::address_manager::create_table(param.value.clone(), param2.value.clone());
         }
     }
     Ok(())
