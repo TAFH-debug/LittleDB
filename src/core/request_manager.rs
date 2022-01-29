@@ -19,7 +19,7 @@ pub fn accept(request: ModuleRequest<BCRequestType>) -> Result<(), ()> {
         BCRequestType::CreateTable => unsafe {
             let param = request.params.first().expect("Empty params.");
             let param2 = request.params.get(1).expect("Params must be two.");
-            super::address_manager::create_table(param.value.clone(), param2.value.clone());
+            super::create_table(param.value.clone(), param2.value.clone());
         }
     }
     Ok(())

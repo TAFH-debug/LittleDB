@@ -1,7 +1,10 @@
 pub mod address_manager;
 pub mod request_manager;
+pub mod data_wrt;
+
 pub use address_manager::*;
 pub use request_manager::*;
+pub use data_wrt::*;
 use crate::inter;
 
 pub enum StorageType {

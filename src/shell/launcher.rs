@@ -18,7 +18,10 @@ struct Args {
     port: u32,
     ///Path to folder where locate database. Absolute or relative.
     #[clap(short, long, default_value = "")]
-    folder: String
+    folder: String,
+    ///Name of database.
+    #[clap(short, long, default_value = "")]
+    name: String
 }
 
 /**
@@ -29,7 +32,7 @@ pub fn launch() -> Result<(), DataError> {
     crate::shell::launch_shell();
     let a = Args::parse();
 
-    match &*a.mode {
+    match &*a.mode.clone() {
         "local" => unsafe {
             crate::MODE = crate::Mode::LOCAL;
         },
@@ -40,6 +43,12 @@ pub fn launch() -> Result<(), DataError> {
             error!("Unknown mode.");
         }
     }
+    unsafe { crate::FOLDER_PATH.with(|g| {
+        g.replace(a.folder.clone());
+    }); }
+    unsafe { crate::DB_NAME.with(|g| {
+        g.replace(a.name.clone());
+    })}
     //TODO port
     Ok(())
 }

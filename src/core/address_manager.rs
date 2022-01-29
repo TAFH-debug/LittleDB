@@ -3,6 +3,8 @@ use std::io::prelude::*;
 use std::os::windows::fs::FileExt;
 use crate::error::DataError;
 use crate::error;
+use std::io::SeekFrom;
+use std::borrow::Borrow;
 
 const DATABASE_NAME: &str = "littledb";
 const VERSION: &str = "v0.1";
@@ -21,19 +23,13 @@ pub fn encode(text: String) -> Vec<u8> {
     res
 }
 
-pub(super) fn load_database_metadata() {
+pub fn load_database_metadata() {
 
 }
 
-pub(super) unsafe fn create_table(name: String, types: String) {
-    let filename = format!("{}/{}", crate::FOLDER_PATH, "data.db");
-    let meta = name + &*types;
-    append_as_binary(&*filename, meta, "error");
-}
-
-pub(super) unsafe fn init_database() {
-    let filename = format!("{}/{}", crate::FOLDER_PATH, "data.db");
-    let mut file = File::open(filename);
+pub unsafe fn init_database() {
+    let filename = format!("{}/{}", crate::FOLDER_PATH.with(|a| a.take()), "data.db");
+    let mut file = File::open(filename.clone());
     let header = DATABASE_NAME.to_owned() + ":" + VERSION + ":";
     let metadata = header;
 
