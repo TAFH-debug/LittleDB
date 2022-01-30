@@ -1,13 +1,15 @@
-use std::fs::{File, OpenOptions};
-use std::io::prelude::*;
-use std::os::windows::fs::FileExt;
-use crate::error::DataError;
-use crate::error;
-use std::io::SeekFrom;
-use std::borrow::Borrow;
-
-const DATABASE_NAME: &str = "littledb";
-const VERSION: &str = "v0.1";
+use std::{
+    fs::{ File, OpenOptions },
+    io::{ prelude::*, SeekFrom},
+    os::windows::fs::FileExt,
+    borrow::Borrow
+};
+use crate::{
+    error,
+    error::DataError,
+    DBMS_NAME,
+    VERSION
+};
 
 pub fn decode(bin: Vec<u8>) -> String {
     let mut res: Vec<u8> = Vec::new();
@@ -30,7 +32,7 @@ pub fn load_database_metadata() {
 pub unsafe fn init_database() {
     let filename = format!("{}/{}", crate::FOLDER_PATH.with(|a| a.take()), "data.db");
     let mut file = File::open(filename.clone());
-    let header = DATABASE_NAME.to_owned() + ":" + VERSION + ":";
+    let header = DBMS_NAME.to_owned() + ":" + VERSION + ":";
     let metadata = header;
 
     write_as_binary(&*filename, metadata, "database initialization error");

@@ -1,17 +1,24 @@
-use std::fs::OpenOptions;
 use super::encode;
-use std::io::{SeekFrom, Seek, Write};
-use crate::error;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::OpenOptions,
+    io::{Seek, SeekFrom, Write},
+    path::{Path, PathBuf}
+};
+use crate::{
+    get_db_file,
+    get_tbl_file
+};
 
 pub unsafe fn create_table(name: String, types: String) {
-    let meta = name + &*types;
+    if name.len() > 255 {
+        panic!("Name len is more than 255");
+    }
+    let meta = name.clone() + &*types;
+    let name_len = name.len() as u8;
     let address: u64;
-    let filename = format!("{}/{}.{}",
-                           crate::FOLDER_PATH.with(|a| a.clone().take()),
-                           crate::DB_NAME.with(|a| a.clone().take()),
-                           crate::MAIN_FILE_EXTENSION);
+
     {
+        let filename = get_db_file();
         let mut file = OpenOptions::new()
             .read(true)
             .append(true)
@@ -23,25 +30,33 @@ pub unsafe fn create_table(name: String, types: String) {
         bin.push(meta_len as u8);
         bin.append(&mut encode(meta));
 
-        address = file.seek(SeekFrom::End(0)).unwrap().clone();
+        address = file.seek(SeekFrom::End(1)).unwrap().clone();
         match file.write(bin.as_slice()) {
             Ok(n) => {}
             Err(n) => {
-                error!("{}", "Error write");
+                panic!("{}", "Error write");
             }
         }
     }
 
     {
+        let filename = get_tbl_file();
         let mut file = OpenOptions::new()
+            .create(true)
             .append(true)
             .read(true)
             .open(filename.clone()).unwrap();
         file.seek(SeekFrom::End(0));
-        match file.write(address.to_be_bytes().as_slice()) {
+
+        let mut data = Vec::new();
+        data.push(name_len);
+        data.append(&mut Vec::from(name.clone().as_bytes()));
+        data.append(&mut Vec::from(address.to_be_bytes()));
+
+        match file.write(data.as_slice()) {
             Ok(_) => {}
             Err(_) => {
-                error!("{}", "Error address")
+                panic!("{}", "Error write file.")
             }
         }
     }

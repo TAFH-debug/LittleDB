@@ -1,16 +1,12 @@
 pub mod address_manager;
-pub mod request_manager;
 pub mod data_wrt;
+pub mod data_read;
 
 pub use address_manager::*;
-pub use request_manager::*;
 pub use data_wrt::*;
-use crate::inter;
+pub use data_read::*;
 
-pub enum StorageType {
-    TABLE,
-    SINGLE_OBJECTS
-}
+use crate::{inter, StorageType};
 
 pub struct ObjectMetadata {
     segment_offset: u16,

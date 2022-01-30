@@ -29,7 +29,8 @@ Launch DBMS.
 */
 pub fn launch() -> Result<(), DataError> {
     crate::config::load();
-    crate::shell::launch_shell();
+    crate::shell::start_shell();
+
     let a = Args::parse();
 
     match &*a.mode.clone() {
@@ -43,12 +44,14 @@ pub fn launch() -> Result<(), DataError> {
             error!("Unknown mode.");
         }
     }
+
     unsafe { crate::FOLDER_PATH.with(|g| {
         g.replace(a.folder.clone());
     }); }
     unsafe { crate::DB_NAME.with(|g| {
         g.replace(a.name.clone());
     })}
+
     //TODO port
     Ok(())
 }
