@@ -8,17 +8,30 @@ pub use data_read::*;
 
 use crate::{inter, StorageType};
 
-pub struct ObjectMetadata {
-    segment_offset: u16,
-    offset: u16,
-    size: u32
+pub struct LDBValue {
+    vtype: LDBType,
+    value: String
+}
+
+pub enum LDBType {
+    STRING,
+    INT,
+    BOOL
+}
+
+impl LDBValue {
+    pub fn new(vtype: LDBType, value: String) -> LDBValue {
+        Self {
+            vtype,
+            value
+        }
+    }
 }
 
 pub struct StorageMetadata {
     segment_offset: u16,
     offset: u16,
     size: u32,
-    objects: Vec<ObjectMetadata>,
     tbl_type: StorageType
 }
 

@@ -1,13 +1,54 @@
-use super::encode;
+use super::{
+    encode,
+    LDBValue,
+    LDBType
+};
 use std::{
     fs::OpenOptions,
-    io::{Seek, SeekFrom, Write},
+    io::{Seek, SeekFrom, Write, Read},
     path::{Path, PathBuf}
 };
 use crate::{
     get_db_file,
     get_tbl_file
 };
+
+pub fn insert_values(name: String, values: Vec<LDBValue>) {
+    let mut file = OpenOptions::new()
+        .read(true)
+        .append(true)
+        .open(crate::get_db_file())
+        .unwrap();
+
+    {
+        let address: u64 = super::get_storage_address(name);
+        file.seek(SeekFrom::Start(address));
+        let mut data_v: Vec<u8> = Vec::new();
+        for i in values {
+            match i.vtype {
+                LDBType::BOOL => {
+                    if i.value.as_str().eq("true") {
+                        data_v.push(1)
+                    }
+                    else if i.value.as_str().eq("false") {
+                        data_v.push(0)
+                    }
+                    else {
+                        panic!("Unexpected value.");
+                    }
+                },
+                LDBType::INT => {
+                    data_v.append(&mut Vec::from(i.value.parse::<i32>().unwrap().to_be_bytes()));
+                },
+                LDBType::STRING => {
+                    data_v.append(&mut Vec::from(i.value.len().to_be_bytes()));
+                    data_v.append(&mut encode(i.value));
+                }
+            }
+        }
+        file.write(&*data_v);
+    }
+}
 
 pub unsafe fn create_table(name: String, types: String) {
     if name.len() > 255 {
@@ -56,7 +97,7 @@ pub unsafe fn create_table(name: String, types: String) {
         match file.write(data.as_slice()) {
             Ok(_) => {}
             Err(_) => {
-                panic!("{}", "Error write file.")
+                panic!("{}", "Error write file.");
             }
         }
     }

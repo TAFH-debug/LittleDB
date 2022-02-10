@@ -1,4 +1,7 @@
-use std::cell::RefCell;
+use std::{
+    cell::RefCell,
+    fs::File
+};
 
 pub enum Mode {
     NONE,
@@ -14,6 +17,7 @@ pub enum StorageType {
 thread_local! {
     pub static FOLDER_PATH: RefCell<String> = RefCell::new(String::new());
     pub static DB_NAME: RefCell<String> = RefCell::new(String::new());
+    //pub static DB_FILE: RefCell<File> = RefCell::new(File::open(get_db_file()).unwrap()); May be later.
 }
 /**
 Returns database main file name.

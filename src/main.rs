@@ -5,7 +5,7 @@
 #[path = "shell/launcher.rs"] mod launcher;
 #[path = "other/error.rs"] mod error;
 #[path = "env/config.rs"] mod config;
-#[path = "shell/shell.rs"] mod shell;
+#[path = "shell/cmd_shell/shell.rs"] mod shell;
 #[path = "../test/tests.rs"] mod tests;
 
 #[cfg(test)]
@@ -18,6 +18,7 @@ pub use constants::*;
 use std::fs::File;
 use std::path::Path;
 use std::io::{Write, BufReader, BufRead, Error, Read};
+use crate::core::{insert_values, LDBValue, LDBType};
 
 fn main() -> Result<(), Error> {
     launcher::launch();
@@ -27,6 +28,12 @@ fn main() -> Result<(), Error> {
         //core::create_table("admins".to_string(), ":int:bool".to_string());
     }
     {
+        let v = vec!(
+            LDBValue::new(LDBType::INT, "2".to_string()),
+            LDBValue::new(LDBType::STRING, "tafh".to_string()),
+            LDBValue::new(LDBType::INT, "3".to_string())
+        );
+        insert_values("tafh".to_string(), v);
         tests::test_crtb();
         let mut inp = String::new();
         std::io::stdin().read_line(&mut inp);
