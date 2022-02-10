@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Cmd {
     pub name: String,
     pub func: fn(&[String]) -> ()
@@ -24,8 +25,13 @@ pub struct CommandHandler {
 }
 
 impl CommandHandler {
+    pub fn new() -> CommandHandler {
+        Self {
+            commands: vec!()
+        }
+    }
     pub fn get_cmd(&self, name: String) -> Option<Cmd> {
-        for cmd in self.commands {
+        for cmd in self.commands.clone() {
             if cmd.name == name {
                 return Some(cmd);
             }
@@ -38,5 +44,3 @@ pub fn write(arg: &str) {
     println!("{}", arg);
     print!(">")
 }
-
-pub fn

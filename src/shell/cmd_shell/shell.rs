@@ -18,15 +18,15 @@ pub fn start_shell() {
     let mut commands = vec!();
     commands.push(Cmd::new("exit", exit));
     commands.push(Cmd::new("help", help));
+    let mut handler = CommandHandler::new();
+    handler.commands = commands;
+
     let mut input = String::new();
     input_stream.read_line(&mut input);
 
     let mut prt = input.trim().split_whitespace();
     let cmd = prt.next().unwrap();
 
-    if cmd == command.name.as_str() {
-        let f = command.func;
-        f(&prt.map(|a| a.to_string()).collect::<Vec<_>>()[..]);
-    }
+    (handler.get_cmd(cmd.to_string()).unwrap().func)(&*prt.map(|a| a.to_string()).collect::<Vec<_>>());
 }
 
