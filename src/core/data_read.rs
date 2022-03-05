@@ -7,16 +7,79 @@ use std::{
     io::{Read, Seek, SeekFrom},
     fs::{File, OpenOptions}
 };
-
-/**
-Finds storage by name.
-*/
+use super::{
+    LDBType,
+    LDBValue
+};
 
 pub fn isvalid_database() {
 
 }
 
-pub fn find_storage(name: String) -> Option<String> {
+pub fn get_values(name: String) -> Result<Vec<LDBValue>, String> {
+    let address = get_storage_address(name.clone());
+    let mut result = Vec::new();
+    {
+        let header = get_storage_header(name.clone()).unwrap();
+        let mut file = File::open(get_tbl_file()).unwrap();
+
+        file.seek(SeekFrom::Start(address - 1 + get_storage_header_size(name) as u64));
+        let mut spl = header.split(":");
+        spl.next();
+        for i in spl {
+            match i {
+                "int" => {
+                    let mut buf = [0; 4];
+                    file.read(&mut buf[..]);
+                    result.push(LDBValue::new(LDBType::INT, i32::from_be_bytes(buf).to_string()));
+                    println!("{:#?}", buf);
+                    println!("{}", i32::from_be_bytes(buf));
+                },
+                "string" => {
+                    let mut buf = [0; 8];
+                    file.read(&mut buf[..]);
+                    let len = usize::from_be_bytes(buf);
+                    println!("{}", len);
+                    let mut text: Vec<u8> = Vec::new();
+                    for i in 0..len {
+                        let mut buf2 = [0; 1];
+                        file.read(&mut buf2[..]);
+                        text.append(&mut Vec::from(buf2));
+                    }
+
+                    println!("{}", String::from_utf8(text).unwrap());
+                },
+                "bool" => panic!("Unimplemented!"),
+                _ => {
+                    panic!("{} is not allowed here.", i)
+                }
+            }
+            println!("{}", i);
+        }
+        
+    }
+    Err("AA".to_string())
+}
+
+pub fn get_storage_header_size(name: String) -> u8 {
+    let address = get_storage_address(name);
+
+    if address != 0 {
+        let mut file = File::open(get_db_file()).unwrap();
+        
+        file.seek(SeekFrom::Start(address - 1));
+
+        let mut buf = [0; 1];
+        let mut header: Vec<u8> = Vec::new();
+
+        file.read(&mut buf[..]);
+
+        return *buf.first().unwrap()
+    }
+    0
+}
+
+pub fn get_storage_header(name: String) -> Option<String> {
     let mut address: u64 = 0;
     {
         let mut file = File::open(get_tbl_file()).unwrap();
@@ -66,7 +129,7 @@ pub fn find_storage(name: String) -> Option<String> {
             header.append(&mut Vec::from(buffer));
         }
 
-        let strin = decode(header);
+        let strin = decode(header).unwrap();
         return Some(strin);
     }
     None

@@ -29,7 +29,7 @@ Launch DBMS.
 */
 pub fn launch() -> Result<(), DataError> {
     crate::config::load();
-    crate::shell::start_shell();
+    //crate::shell::start_shell();
 
     let a = Args::parse();
 

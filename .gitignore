@@ -5,3 +5,5 @@ data.*
 /database
 /target
 config.json
+/.history
+Cargo.lock

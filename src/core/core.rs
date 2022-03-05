@@ -6,7 +6,7 @@ pub use address_manager::*;
 pub use data_wrt::*;
 pub use data_read::*;
 
-use crate::{inter, StorageType};
+use crate::StorageType;
 
 pub struct LDBValue {
     vtype: LDBType,

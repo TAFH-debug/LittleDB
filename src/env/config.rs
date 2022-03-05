@@ -16,10 +16,10 @@ pub fn load() {
     else {
         let mut file = File::create(crate::CONFIG_FILE).expect("Error when creating configs");
 
-        let default_config = object! {
+        let default_configs = object! {
             recent_dbs: []
         };
 
-        write!(file, "{}", default_config.pretty(4));
+        write!(file, "{}", default_configs.pretty(4));
     }
 }

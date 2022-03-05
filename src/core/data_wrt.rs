@@ -5,15 +5,14 @@ use super::{
 };
 use std::{
     fs::OpenOptions,
-    io::{Seek, SeekFrom, Write, Read},
-    path::{Path, PathBuf}
+    io::{Seek, SeekFrom, Write},
 };
 use crate::{
     get_db_file,
     get_tbl_file
 };
 
-pub fn insert_values(name: String, values: Vec<LDBValue>) {
+pub fn insert_values(name: String, values: Vec<LDBValue>) -> Result<(), String> {
     let mut file = OpenOptions::new()
         .read(true)
         .append(true)
@@ -22,7 +21,10 @@ pub fn insert_values(name: String, values: Vec<LDBValue>) {
 
     {
         let address: u64 = super::get_storage_address(name);
-        file.seek(SeekFrom::Start(address));
+        match file.seek(SeekFrom::Start(address)) {
+            Ok(_) => {},
+            Err(_) => return Err("Error when inserting values".to_string())
+        }
         let mut data_v: Vec<u8> = Vec::new();
         for i in values {
             match i.vtype {
@@ -46,8 +48,12 @@ pub fn insert_values(name: String, values: Vec<LDBValue>) {
                 }
             }
         }
-        file.write(&*data_v);
+        match file.write(&*data_v) {
+            Ok(_) => {},
+            Err(_) => return Err("Something went wrong".to_string())
+        }
     }
+    Ok(())
 }
 
 pub unsafe fn create_table(name: String, types: String) {
