@@ -7,6 +7,7 @@ use std::{
     io::{Read, Seek, SeekFrom},
     fs::{File, OpenOptions}
 };
+use crate::core::HEADER;
 use super::{
     LDBType,
     LDBValue
@@ -30,8 +31,25 @@ pub fn read_string(mut file: &mut File) -> Result<String, String> {
     decode(text)
 }
 
-pub fn isvalid_database() -> bool {
-    let mut file = get_db_file();
+pub fn is_valid_database() -> bool {
+    let mut file = File::open(get_db_file()).unwrap();
+    let mut len = [0; 1];
+    let mut header = Vec::new();
+
+    match file.read(&mut len) {
+        Ok(_) => {},
+        Err(_) => panic!("Error")
+    }
+
+    for _ in 0..*len.first().unwrap() {
+        let mut buf = [0 as u8; 1];
+        file.read(&mut buf);
+        header.append(&mut Vec::from(buf));
+    }
+
+    let mut header_s = String::from_utf8(header).unwrap();
+
+    header_s.as_str() == HEADER
 }
 
 pub fn get_values(name: String) -> Result<Vec<LDBValue>, String> {
@@ -77,24 +95,6 @@ pub fn get_values(name: String) -> Result<Vec<LDBValue>, String> {
         
     }
     Ok(result)
-}
-
-pub fn get_storage_header_size(name: String) -> u8 {
-    let address = get_storage_address(name);
-
-    if address != 0 {
-        let mut file = File::open(get_db_file()).unwrap();
-        
-        file.seek(SeekFrom::Start(address - 1));
-
-        let mut buf = [0; 1];
-        let mut header: Vec<u8> = Vec::new();
-
-        file.read(&mut buf[..]);
-
-        return *buf.first().unwrap()
-    }
-    0
 }
 
 pub fn get_storage_header(name: String) -> Option<String> {

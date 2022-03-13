@@ -7,6 +7,9 @@ pub use data_wrt::*;
 pub use data_read::*;
 
 use crate::StorageType;
+
+const HEADER: &'static str = "littledb:v0.1";
+
 #[derive(Debug)]
 pub struct LDBValue {
     vtype: LDBType,

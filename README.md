@@ -1,1 +1,1 @@
-###LittleDB - SQL-like database management system written in rust.
+### LittleDB - SQL-like database management system written in rust.

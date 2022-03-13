@@ -1,7 +1,5 @@
 use std::error::Error;
 use std::fmt::{Display, Debug, Formatter};
-use crate::error::*;
-use crate::error;
 
 extern crate clap;
 use clap::Parser;
@@ -27,7 +25,7 @@ struct Args {
 /**
 Launch DBMS.
 */
-pub fn launch() -> Result<(), DataError> {
+pub fn launch() -> Result<(), String> {
     crate::config::load();
     //crate::shell::start_shell();
 
@@ -41,7 +39,7 @@ pub fn launch() -> Result<(), DataError> {
             crate::MODE = crate::Mode::WEB;
         }
         _ => {
-            error!("Unknown mode.");
+            panic!("Unknown mode.");
         }
     }
 

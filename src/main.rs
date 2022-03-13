@@ -2,7 +2,6 @@
 
 #[path = "core/core.rs"] mod core;
 #[path = "shell/launcher.rs"] mod launcher;
-#[path = "other/error.rs"] mod error;
 #[path = "env/config.rs"] mod config;
 #[path = "shell/cmd_shell/shell.rs"] mod shell;
 
@@ -13,11 +12,13 @@ mod constants;
 pub use constants::*;
 
 use std::io::{Error, stdin};
-use crate::core::{insert_values, LDBValue, LDBType, delete_database};
+use crate::core::{insert_values, LDBValue, LDBType, delete_database, is_valid_database, init_database};
 
 fn main() -> Result<(), Error> {
     launcher::launch();
     delete_database();
+    init_database();
+    println!("{}", is_valid_database());
     unsafe { 
         core::create_table("users".to_string(), ":int:string".to_string());
         core::create_table("tafh".to_string(), ":int:string:int".to_string());

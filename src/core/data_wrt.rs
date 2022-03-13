@@ -13,11 +13,21 @@ use crate::{
     get_db_file,
     get_tbl_file
 };
-use crate::core::get_storage_address;
+use crate::core::{get_storage_address, HEADER};
 
 pub fn delete_database() {
     File::create(get_db_file()).unwrap();
     File::create(get_tbl_file()).unwrap();
+}
+
+pub fn init_database() -> Result<(), ()> {
+    let mut file = File::create(get_db_file()).unwrap();
+
+    let mut header = Vec::new();
+    header.push(HEADER.len() as u8);
+    header.append(&mut Vec::from(HEADER.as_bytes()));
+    file.write(&*header);
+    Ok(())
 }
 
 pub fn insert_values(name: String, values: Vec<LDBValue>) -> Result<(), String> {
