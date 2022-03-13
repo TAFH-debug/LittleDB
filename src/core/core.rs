@@ -7,12 +7,13 @@ pub use data_wrt::*;
 pub use data_read::*;
 
 use crate::StorageType;
-
+#[derive(Debug)]
 pub struct LDBValue {
     vtype: LDBType,
     value: String
 }
 
+#[derive(Debug)]
 pub enum LDBType {
     STRING,
     INT,

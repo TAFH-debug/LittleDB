@@ -12,16 +12,16 @@ mod tests;
 mod constants;
 pub use constants::*;
 
-
-use std::io::{ Error };
-use crate::core::{insert_values, LDBValue, LDBType};
+use std::io::{Error, stdin};
+use crate::core::{insert_values, LDBValue, LDBType, delete_database};
 
 fn main() -> Result<(), Error> {
     launcher::launch();
+    delete_database();
     unsafe { 
-        //core::create_table("users".to_string(), ":int:string".to_string());
-        //core::create_table("tafh".to_string(), ":int:string:int".to_string());
-        //core::create_table("admins".to_string(), ":int:bool".to_string());
+        core::create_table("users".to_string(), ":int:string".to_string());
+        core::create_table("tafh".to_string(), ":int:string:int".to_string());
+        core::create_table("admins".to_string(), ":int:bool".to_string());
     }
     {
         let v = vec!(
@@ -29,11 +29,17 @@ fn main() -> Result<(), Error> {
             LDBValue::new(LDBType::STRING, "tafh".to_string()),
             LDBValue::new(LDBType::INT, "3".to_string())
         );
-        insert_values("tafh".to_string(), v);
+        println!("Insert?");
+        stdin().read_line(&mut String::new());
+        match insert_values("tafh".to_string(), v) {
+            Ok(_) => {},
+            Err(n) => panic!("{}", n)
+        }
         let mut inp = String::new();
-        std::io::stdin().read_line(&mut inp);
-        core::get_values(inp.trim().to_string());
-        //println!("{}", core::get_storage_header(inp.trim().to_string()).unwrap());
+        stdin().read_line(&mut inp);
+        let values = core::get_values(inp.trim().to_string()).unwrap();
+
+        println!("{:#?}", values);
     }
     return Ok(());
 }

@@ -12,8 +12,26 @@ use super::{
     LDBValue
 };
 
-pub fn isvalid_database() {
+pub fn read_string(mut file: &mut File) -> Result<String, String> {
+    let mut buf = [0; 8];
+    file.read(&mut buf);
+    let len = usize::from_be_bytes(buf);
+    let mut text: Vec<u8> = Vec::new();
 
+    for _ in 0..len {
+        let mut buf2 = [0; 1];
+        match file.read(&mut buf2) {
+            Ok(0) => return Err("EOF is not allowed here!".to_string()),
+            Ok(_) => {},
+            Err(_) => return Err("Something went wrong".to_string())
+        }
+        text.append(&mut Vec::from(buf2));
+    }
+    decode(text)
+}
+
+pub fn isvalid_database() -> bool {
+    let mut file = get_db_file();
 }
 
 pub fn get_values(name: String) -> Result<Vec<LDBValue>, String> {
@@ -21,44 +39,44 @@ pub fn get_values(name: String) -> Result<Vec<LDBValue>, String> {
     let mut result = Vec::new();
     {
         let header = get_storage_header(name.clone()).unwrap();
-        let mut file = File::open(get_tbl_file()).unwrap();
+        let mut file = File::open(get_db_file()).unwrap();
 
-        file.seek(SeekFrom::Start(address - 1 + get_storage_header_size(name) as u64));
+        file.seek(SeekFrom::Start(address + header.len() as u64 + 1));
         let mut spl = header.split(":");
         spl.next();
+
         for i in spl {
             match i {
                 "int" => {
                     let mut buf = [0; 4];
-                    file.read(&mut buf[..]);
+                    match file.read(&mut buf[..]) {
+                        Ok(0) => panic!("Nothing were read"),
+                        Ok(_) => {},
+                        Err(_) => panic!("Unexpected error!")
+                    }
                     result.push(LDBValue::new(LDBType::INT, i32::from_be_bytes(buf).to_string()));
-                    println!("{:#?}", buf);
-                    println!("{}", i32::from_be_bytes(buf));
                 },
                 "string" => {
-                    let mut buf = [0; 8];
-                    file.read(&mut buf[..]);
-                    let len = usize::from_be_bytes(buf);
-                    println!("{}", len);
-                    let mut text: Vec<u8> = Vec::new();
-                    for i in 0..len {
-                        let mut buf2 = [0; 1];
-                        file.read(&mut buf2[..]);
-                        text.append(&mut Vec::from(buf2));
-                    }
-
-                    println!("{}", String::from_utf8(text).unwrap());
+                    result.push(LDBValue::new(LDBType::STRING, read_string(&mut file).unwrap()));
                 },
-                "bool" => panic!("Unimplemented!"),
+                "bool" => {
+                    let mut buf = [0; 1];
+                    match file.read(&mut buf) {
+                        Ok(0) => panic!("EOF is not allowed here!"),
+                        Ok(_) => {},
+                        Err(_) => panic!("Something went wrong.")
+                    }
+                    let bl = *buf.first().unwrap() == 0u8;
+                    result.push(LDBValue::new(LDBType::BOOL, bl.to_string()));
+                },
                 _ => {
                     panic!("{} is not allowed here.", i)
                 }
             }
-            println!("{}", i);
         }
         
     }
-    Err("AA".to_string())
+    Ok(result)
 }
 
 pub fn get_storage_header_size(name: String) -> u8 {
@@ -116,7 +134,7 @@ pub fn get_storage_header(name: String) -> Option<String> {
     if address != 0 {
         let mut file = File::open(get_db_file()).unwrap();
         
-        file.seek(SeekFrom::Start(address - 1));
+        file.seek(SeekFrom::Start(address));
 
         let mut buf = [0; 1];
         let mut header: Vec<u8> = Vec::new();
@@ -150,14 +168,12 @@ pub fn get_storage_address(storage_name: String) -> u64 {
             Err(_) => panic!("Unknown error."),
         }
 
-        //Read name
         for i in 0..*size.first().unwrap() as i32 {
             let mut var1 = [0 as u8; 1];
             metafile.read(&mut var1);
             name.push(*var1.first().unwrap())
         }
 
-        //If storage name equals to name that we received returns storage address.
         if String::from_utf8(name).unwrap() == storage_name {
             let mut buf = [0 as u8; 8];
             metafile.read(&mut buf);
