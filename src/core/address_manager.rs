@@ -1,20 +1,10 @@
-use std::{
-    fs::{ File, OpenOptions },
-    io::{ prelude::*, SeekFrom},
-    borrow::Borrow
-};
-use crate::{
-    DBMS_NAME,
-    VERSION
-};
-
 pub fn decode(bin: Vec<u8>) -> Result<String, String> {
     let mut res: Vec<u8> = Vec::new();
     for i in bin { res.push(i >> 1) }
 
     match String::from_utf8(res) {
         Ok(n) => Ok(n),
-        Err(n) => Err(String::from("String decoding error"))
+        Err(_) => Err(String::from("String decoding error"))
     }
 }
 

@@ -31,17 +31,3 @@ impl LDBValue {
         }
     }
 }
-
-pub struct StorageMetadata {
-    segment_offset: u16,
-    offset: u16,
-    size: u32,
-    tbl_type: StorageType
-}
-
-pub struct DatabaseMetadata {
-    segment_offset: u16,
-    offset: u16,
-    size: u32,
-    tables: Vec<StorageMetadata>
-}

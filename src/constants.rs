@@ -1,6 +1,5 @@
 use std::{
-    cell::RefCell,
-    fs::File
+    cell::RefCell
 };
 
 pub enum Mode {

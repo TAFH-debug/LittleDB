@@ -29,6 +29,7 @@ impl CommandHandler {
             commands: vec!()
         }
     }
+
     pub fn get_cmd(&self, name: String) -> Option<Cmd> {
         for cmd in self.commands.clone() {
             if cmd.name == name {

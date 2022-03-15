@@ -1,5 +1,4 @@
-use std::error::Error;
-use std::fmt::{Display, Debug, Formatter};
+use std::fmt::Debug;
 
 extern crate clap;
 use clap::Parser;
@@ -27,7 +26,7 @@ Launch DBMS.
 */
 pub fn launch() -> Result<(), String> {
     crate::config::load();
-    //crate::shell::start_shell();
+    crate::shell::start_shell();
 
     let a = Args::parse();
 
@@ -43,12 +42,12 @@ pub fn launch() -> Result<(), String> {
         }
     }
 
-    unsafe { crate::FOLDER_PATH.with(|g| {
+    crate::FOLDER_PATH.with(|g| {
         g.replace(a.folder.clone());
-    }); }
-    unsafe { crate::DB_NAME.with(|g| {
+    });
+    crate::DB_NAME.with(|g| {
         g.replace(a.name.clone());
-    })}
+    });
 
     //TODO port
     Ok(())

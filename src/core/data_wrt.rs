@@ -121,8 +121,8 @@ pub unsafe fn create_table(name: String, types: String) {
 
         address = file.seek(SeekFrom::End(0)).unwrap();
         match file.write(bin.as_slice()) {
-            Ok(n) => {}
-            Err(n) => {
+            Ok(_) => {}
+            Err(_) => {
                 panic!("{}", "Error write");
             }
         }

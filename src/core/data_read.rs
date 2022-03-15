@@ -13,7 +13,7 @@ use super::{
     LDBValue
 };
 
-pub fn read_string(mut file: &mut File) -> Result<String, String> {
+pub fn read_string(file: &mut File) -> Result<String, String> {
     let mut buf = [0; 8];
     file.read(&mut buf);
     let len = usize::from_be_bytes(buf);
@@ -47,7 +47,7 @@ pub fn is_valid_database() -> bool {
         header.append(&mut Vec::from(buf));
     }
 
-    let mut header_s = String::from_utf8(header).unwrap();
+    let header_s = String::from_utf8(header).unwrap();
 
     header_s.as_str() == HEADER
 }
@@ -106,16 +106,16 @@ pub fn get_storage_header(name: String) -> Option<String> {
             let mut name_size = [0; 1];
             match file.read(&mut name_size) {
                 Ok(0) => break,
-                Ok(n) => (),
-                Err(n) => panic!("Something went wrong")
+                Ok(_) => (),
+                Err(_) => panic!("Something went wrong")
             }
             let mut comp_name = String::new();
 
-            for i in 0..*name_size.first().unwrap() {
+            for _ in 0..*name_size.first().unwrap() {
                 let mut buf: [u8; 1] = [0; 1];
                 match file.read(&mut buf) {
-                    Ok(n) => (),
-                    Err(n) => panic!("Something went wrong")
+                    Ok(_) => (),
+                    Err(_) => panic!("Something went wrong")
                 }
                 comp_name += &*String::from_utf8(Vec::from(buf)).unwrap();
             }
@@ -141,7 +141,7 @@ pub fn get_storage_header(name: String) -> Option<String> {
 
         file.read(&mut buf[..]);
 
-        for i in 0..*buf.first().unwrap() {
+        for _ in 0..*buf.first().unwrap() {
             let mut buffer: [u8; 1] = [0; 1];
             file.read(&mut buffer);
             header.append(&mut Vec::from(buffer));
@@ -168,7 +168,7 @@ pub fn get_storage_address(storage_name: String) -> u64 {
             Err(_) => panic!("Unknown error."),
         }
 
-        for i in 0..*size.first().unwrap() as i32 {
+        for _ in 0..*size.first().unwrap() as i32 {
             let mut var1 = [0 as u8; 1];
             metafile.read(&mut var1);
             name.push(*var1.first().unwrap())
