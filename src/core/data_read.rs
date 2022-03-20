@@ -7,13 +7,14 @@ use std::{
     io::{Read, Seek, SeekFrom},
     fs::{File, OpenOptions}
 };
-use crate::core::HEADER;
+use std::collections::HashMap;
+use std::iter::Map;
+use crate::core::{ErrorType, HEADER, LDBObject, OBJECT_SEPARATOR};
 use super::{
-    LDBType,
     LDBValue
 };
 
-pub fn read_string(file: &mut File) -> Result<String, String> {
+pub fn read_string(file: &mut File) -> Result<String, ErrorType> {
     let mut buf = [0; 8];
     file.read(&mut buf);
     let len = usize::from_be_bytes(buf);
@@ -22,23 +23,23 @@ pub fn read_string(file: &mut File) -> Result<String, String> {
     for _ in 0..len {
         let mut buf2 = [0; 1];
         match file.read(&mut buf2) {
-            Ok(0) => return Err("EOF is not allowed here!".to_string()),
+            Ok(0) => return Err(ErrorType::UnexpectedEOF),
             Ok(_) => {},
-            Err(_) => return Err("Something went wrong".to_string())
+            Err(_) => return Err(ErrorType::IO)
         }
         text.append(&mut Vec::from(buf2));
     }
     decode(text)
 }
 
-pub fn is_valid_database() -> bool {
+pub fn is_valid_database() -> Result<bool, ErrorType> {
     let mut file = File::open(get_db_file()).unwrap();
     let mut len = [0; 1];
     let mut header = Vec::new();
 
     match file.read(&mut len) {
         Ok(_) => {},
-        Err(_) => panic!("Error")
+        Err(_) => return Err(ErrorType::IO)
     }
 
     for _ in 0..*len.first().unwrap() {
@@ -49,11 +50,11 @@ pub fn is_valid_database() -> bool {
 
     let header_s = String::from_utf8(header).unwrap();
 
-    header_s.as_str() == HEADER
+    Ok(header_s.as_str() == HEADER)
 }
 
-pub fn get_values(name: String) -> Result<Vec<LDBValue>, String> {
-    let address = get_storage_address(name.clone());
+pub fn get_values(name: String) -> Result<Vec<HashMap<String, LDBValue>>, ErrorType> {
+    let address = get_storage_address(name.clone()).unwrap();
     let mut result = Vec::new();
     {
         let header = get_storage_header(name.clone()).unwrap();
@@ -63,109 +64,112 @@ pub fn get_values(name: String) -> Result<Vec<LDBValue>, String> {
         let mut spl = header.split(":");
         spl.next();
 
-        for i in spl {
-            match i {
-                "int" => {
-                    let mut buf = [0; 4];
-                    match file.read(&mut buf[..]) {
-                        Ok(0) => panic!("Nothing were read"),
-                        Ok(_) => {},
-                        Err(_) => panic!("Unexpected error!")
-                    }
-                    result.push(LDBValue::new(LDBType::INT, i32::from_be_bytes(buf).to_string()));
-                },
-                "string" => {
-                    result.push(LDBValue::new(LDBType::STRING, read_string(&mut file).unwrap()));
-                },
-                "bool" => {
-                    let mut buf = [0; 1];
-                    match file.read(&mut buf) {
-                        Ok(0) => panic!("EOF is not allowed here!"),
-                        Ok(_) => {},
-                        Err(_) => panic!("Something went wrong.")
-                    }
-                    let bl = *buf.first().unwrap() == 0u8;
-                    result.push(LDBValue::new(LDBType::BOOL, bl.to_string()));
-                },
-                _ => {
-                    panic!("{} is not allowed here.", i)
+        let values = spl.collect::<Vec<&str>>();
+        let mut mapped_vals: Vec<(String, String)> = vec!();
+
+        for i in 0..values.len() {
+            let mut g = values[i].split("-");
+            mapped_vals.push((
+                g.next().unwrap().to_string(),
+                g.next().unwrap().to_string()
+            ));
+        }
+
+        loop {
+            let mut check = [0; 1];
+            match file.read(&mut check) {
+                Ok(0) => break,
+                Ok(_) => (),
+                Err(_) => return Err(ErrorType::IO)
+            };
+            if *check.first().unwrap() != OBJECT_SEPARATOR { break; }
+
+            let mut obj: HashMap<String, LDBValue> = HashMap::new();
+            for i in mapped_vals.clone() {
+                match i.1.as_str() {
+                    "int" => {
+                        let mut buf = [0; 4];
+                        match file.read(&mut buf[..]) {
+                            Ok(0) => return Err(ErrorType::UnexpectedEOF),
+                            Ok(_) => {},
+                            Err(_) => return Err(ErrorType::IO)
+                        }
+
+                        let int = i32::from_be_bytes(buf);
+                        obj.insert(
+                            i.0,
+                            LDBValue::INT(int)
+                        );
+                    },
+                    "string" => {
+                        let strng = match read_string(&mut file) {
+                            Ok(n) => n,
+                            Err(_) => return Err(ErrorType::IO)
+                        };
+                        obj.insert(
+                            i.0,
+                            LDBValue::STRING(strng)
+                        );
+                    },
+                    "bool" => {
+                        let mut buf = [0; 1];
+                        match file.read(&mut buf) {
+                            Ok(0) => return Err(ErrorType::UnexpectedEOF),
+                            Ok(_) => {},
+                            Err(_) => return Err(ErrorType::IO)
+                        };
+                        let bl = *buf.first().unwrap() == 0u8;
+                        obj.insert(
+                            i.0,
+                            LDBValue::BOOL(bl)
+                        );
+                    },
+                    _ => return Err(ErrorType::InvalidFormat)
                 }
             }
+            result.push(obj);
         }
-        
     }
     Ok(result)
 }
 
-pub fn get_storage_header(name: String) -> Option<String> {
-    let mut address: u64 = 0;
-    {
-        let mut file = File::open(get_tbl_file()).unwrap();
+pub fn get_storage_header(name: String) -> Result<String, ErrorType> {
+    let mut address: u64 = get_storage_address(name).unwrap();
 
-        loop {
-            let mut name_size = [0; 1];
-            match file.read(&mut name_size) {
-                Ok(0) => break,
-                Ok(_) => (),
-                Err(_) => panic!("Something went wrong")
-            }
-            let mut comp_name = String::new();
+    let mut file = File::open(get_db_file()).unwrap();
 
-            for _ in 0..*name_size.first().unwrap() {
-                let mut buf: [u8; 1] = [0; 1];
-                match file.read(&mut buf) {
-                    Ok(_) => (),
-                    Err(_) => panic!("Something went wrong")
-                }
-                comp_name += &*String::from_utf8(Vec::from(buf)).unwrap();
-            }
-            if comp_name == name {
-                let mut address_r: [u8; 8] = [0; 8];
-                file.read(&mut address_r);
-                address = u64::from_be_bytes(address_r);
-                break;
-            }
-            else {
-                file.seek(SeekFrom::Current(8));
-            }
-        }
+    file.seek(SeekFrom::Start(address));
+    let mut buf = [0; 1];
+    let mut header: Vec<u8> = Vec::new();
+
+    match file.read(&mut buf[..]) {
+        Ok(_) => {},
+        Err(_) => return Err(ErrorType::IO)
+    };
+
+    for _ in 0..*buf.first().unwrap() {
+        let mut buffer: [u8; 1] = [0; 1];
+        file.read(&mut buffer);
+        header.append(&mut Vec::from(buffer));
     }
-    
-    if address != 0 {
-        let mut file = File::open(get_db_file()).unwrap();
-        
-        file.seek(SeekFrom::Start(address));
 
-        let mut buf = [0; 1];
-        let mut header: Vec<u8> = Vec::new();
-
-        file.read(&mut buf[..]);
-
-        for _ in 0..*buf.first().unwrap() {
-            let mut buffer: [u8; 1] = [0; 1];
-            file.read(&mut buffer);
-            header.append(&mut Vec::from(buffer));
-        }
-
-        let strin = decode(header).unwrap();
-        return Some(strin);
-    }
-    None
+    let strin = decode(header).unwrap();
+    return Ok(strin);
 }
 
-pub fn get_storage_address(storage_name: String) -> u64 {
+pub fn get_storage_address(storage_name: String) -> Result<u64, ErrorType> {
     let mut metafile = OpenOptions::new()
         .read(true)
         .append(true)
         .open(crate::get_tbl_file())
         .unwrap();
-    loop {
+    Ok(loop {
         let mut size = [0 as u8; 1];
         let mut name: Vec<u8> = Vec::new();
         match metafile.read(&mut size) {
-            Ok(0) => panic!("EOF is not expected here."),
+            Ok(0) => return Err(ErrorType::StrorageNotFound),
             Ok(_) => (),
-            Err(_) => panic!("Unknown error."),
+            Err(_) => return Err(ErrorType::IO),
         }
 
         for _ in 0..*size.first().unwrap() as i32 {
@@ -182,5 +186,5 @@ pub fn get_storage_address(storage_name: String) -> u64 {
         else {
             metafile.seek(SeekFrom::Current(std::mem::size_of::<u64>() as i64));
         }
-    }
+    })
 }

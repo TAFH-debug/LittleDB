@@ -1,7 +1,6 @@
 use super::{
     encode,
-    LDBValue,
-    LDBType
+    LDBValue
 };
 use std::{
     fs::OpenOptions,
@@ -13,7 +12,7 @@ use crate::{
     get_db_file,
     get_tbl_file
 };
-use crate::core::{get_storage_address, HEADER};
+use crate::core::{ErrorType, get_storage_address, HEADER, OBJECT_SEPARATOR};
 
 pub fn delete_database() {
     File::create(get_db_file()).unwrap();
@@ -30,67 +29,70 @@ pub fn init_database() -> Result<(), ()> {
     Ok(())
 }
 
-pub fn insert_values(name: String, values: Vec<LDBValue>) -> Result<(), String> {
+pub fn _insert_values(name: String, values: Vec<LDBValue>) -> Result<(), ErrorType> {
     let mut data_v: Vec<u8> = Vec::new();
+    data_v.push(OBJECT_SEPARATOR);
 
     for i in values {
-        match i.vtype {
-            LDBType::BOOL => {
-                if i.value.as_str().eq("true") {
+        match i {
+            LDBValue::BOOL(n) => {
+                if n.to_string().eq("true") {
                     data_v.push(1)
                 }
-                else if i.value.as_str().eq("false") {
+                else if n.to_string().eq("false") {
                     data_v.push(0)
                 }
                 else {
-                    panic!("Unexpected value.");
+                    return Err(ErrorType::InvalidArgument);
                 }
             },
-            LDBType::INT => {
-                data_v.append(&mut Vec::from(i.value.parse::<i32>().unwrap().to_be_bytes()));
+            LDBValue::INT(n) => {
+                data_v.append(&mut Vec::from(n.to_be_bytes()));
             },
-            LDBType::STRING => {
-                data_v.append(&mut Vec::from(i.value.len().to_be_bytes()));
-                data_v.append(&mut encode(i.value));
+            LDBValue::STRING(n) => {
+                data_v.append(&mut Vec::from(n.len().to_be_bytes()));
+                data_v.append(&mut encode(n));
             }
         }
     }
-
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
         .open(crate::get_db_file())
         .unwrap();
 
-    skip_to_values(&mut file, name.clone());
+    match skip_to_values(&mut file, name.clone()) {
+        Ok(_) => {},
+        Err(n) => return Err(n)
+    }
 
     let mut prev_data = Vec::new();
     file.read_to_end(&mut prev_data);
 
     skip_to_values(&mut file, name);
-    println!("Stream position before: {}", file.stream_position().unwrap());
     data_v.append(&mut prev_data);
 
     match file.write(&*data_v) {
-        Ok(_) => println!("Stream position after: {}", file.stream_position().unwrap()),
-        Err(_) => return Err("Something went wrong".to_string())
+        Ok(_) => {},
+        Err(_) => return Err(ErrorType::IO)
     }
 
     Ok(())
 }
 
-pub fn skip_to_values(file: &mut File, name: String) -> Result<(), String> {
-    let address = get_storage_address(name);
+pub fn skip_to_values(file: &mut File, name: String) -> Result<(), ErrorType> {
+    let address = get_storage_address(name).unwrap();
+
     match file.seek(SeekFrom::Start(address)) {
         Ok(_) => (),
-        Err(_) => return Err("Error when inserting values".to_string())
+        Err(_) => return Err(ErrorType::IO)
     }
 
     let mut buf = [0; 1];
 
     match file.read(&mut buf) {
         Ok(_) => (),
-        Err(_) => return Err("Error when reading".to_string())
+        Err(_) => return Err(ErrorType::IO)
     };
 
     file.seek(SeekFrom::Current(*buf.first().unwrap() as i64));
@@ -98,9 +100,9 @@ pub fn skip_to_values(file: &mut File, name: String) -> Result<(), String> {
     Ok(())
 }
 
-pub unsafe fn create_table(name: String, types: String) {
-    if name.len() > 255 {
-        panic!("Name len is more than 255");
+pub unsafe fn _create_table(name: String, types: String) -> Result<(), ErrorType> {
+    if name.len() > 255 || name.len() < 1 {
+        return Err(ErrorType::InvalidArgument);
     }
     let meta = name.clone() + &*types;
     let name_len = name.len() as u8;
@@ -121,10 +123,8 @@ pub unsafe fn create_table(name: String, types: String) {
 
         address = file.seek(SeekFrom::End(0)).unwrap();
         match file.write(bin.as_slice()) {
-            Ok(_) => {}
-            Err(_) => {
-                panic!("{}", "Error write");
-            }
+            Ok(_) => {},
+            Err(_) => return Err(ErrorType::IO)
         }
     }
 
@@ -134,7 +134,7 @@ pub unsafe fn create_table(name: String, types: String) {
             .create(true)
             .append(true)
             .read(true)
-            .open(filename.clone()).unwrap();
+            .open(filename.clone()).expect("Cannot open database file.");
         file.seek(SeekFrom::End(0));
 
         let mut data = Vec::new();
@@ -144,9 +144,8 @@ pub unsafe fn create_table(name: String, types: String) {
 
         match file.write(data.as_slice()) {
             Ok(_) => {}
-            Err(_) => {
-                panic!("{}", "Error write file.");
-            }
+            Err(_) => return Err(ErrorType::IO)
         }
     }
+    Ok(())
 }

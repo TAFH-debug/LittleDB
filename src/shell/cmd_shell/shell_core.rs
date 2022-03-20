@@ -52,7 +52,6 @@ impl CommandHandler {
         };
         let str_slice = &*prt.map(|a| a.to_string()).collect::<Vec<_>>();
 
-        print!("\n");
         match self.get_cmd(cmd.to_string()) {
             Some(n) => (n.func)(str_slice),
             None => println!("Command not found!")

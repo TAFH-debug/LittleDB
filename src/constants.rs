@@ -15,8 +15,6 @@ pub enum StorageType {
 
 thread_local! {
     pub static FOLDER_PATH: RefCell<String> = RefCell::new(String::new());
-    pub static DB_NAME: RefCell<String> = RefCell::new(String::new());
-    //pub static DB_FILE: RefCell<File> = RefCell::new(File::open(get_db_file()).unwrap()); May be later.
 }
 /**
 Returns database main file name.
@@ -24,7 +22,7 @@ Returns database main file name.
 pub fn get_db_file() -> String {
     format!("{}/{}.{}",
             FOLDER_PATH.with(|a| a.clone().take()),
-            DB_NAME.with(|a| a.clone().take()),
+            FILE_NAME,
             MAIN_FILE_EXTENSION)
 }
 
@@ -34,13 +32,11 @@ Returns table data file name.
 pub fn get_tbl_file() -> String {
     format!("{}/{}.{}",
         FOLDER_PATH.with(|a| a.clone().take()),
-        DB_NAME.with(|a| a.clone().take()),
+        FILE_NAME,
         STORAGE_DATA_EXTENSION
     )
 }
-
-pub const DBMS_NAME: &str = "littledb";
-pub const VERSION: &str = "v0.1";
+pub const FILE_NAME: &str = "data";
 
 pub static mut MODE: Mode = Mode::NONE;
 pub static CONFIG_FILE: &str = "config.json";

@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::path::Path;
 
 extern crate clap;
 use clap::Parser;
@@ -16,9 +17,6 @@ struct Args {
     ///Path to folder where locate database. Absolute or relative.
     #[clap(short, long, default_value = "")]
     folder: String,
-    ///Name of database.
-    #[clap(short, long, default_value = "")]
-    name: String
 }
 
 /**
@@ -26,11 +24,10 @@ Launch DBMS.
 */
 pub fn launch() -> Result<(), String> {
     crate::config::load();
-    crate::shell::start_shell();
 
-    let a = Args::parse();
+    let args = Args::parse();
 
-    match &*a.mode.clone() {
+    match &*args.mode.clone() {
         "local" => unsafe {
             crate::MODE = crate::Mode::LOCAL;
         },
@@ -38,17 +35,26 @@ pub fn launch() -> Result<(), String> {
             crate::MODE = crate::Mode::WEB;
         }
         _ => {
-            panic!("Unknown mode.");
+            println!("Unknown mode!");
+            std::process::exit(0);
         }
     }
 
+    if args.folder.clone() == "" {
+        println!("Error: Missing required command-line option --folder.");
+        println!("For more information try --help.");
+        std::process::exit(0);
+    }
+    if !Path::new(&args.folder).exists() {
+        println!("Error: This path is not exists.");
+        std::process::exit(0);
+    }
+
     crate::FOLDER_PATH.with(|g| {
-        g.replace(a.folder.clone());
-    });
-    crate::DB_NAME.with(|g| {
-        g.replace(a.name.clone());
+        g.replace(args.folder.clone());
     });
 
+    crate::shell::start_shell();
     //TODO port
     Ok(())
 }
