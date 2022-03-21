@@ -3,11 +3,10 @@ pub mod data_wrt;
 pub mod data_read;
 
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 pub use util::*;
 pub use data_wrt::*;
 pub use data_read::*;
-
-use crate::StorageType;
 
 const OBJECT_SEPARATOR: u8 = 0x00;
 const HEADER: &'static str = "littledb:v0.1";

@@ -44,7 +44,9 @@ impl CommandHandler {
 
         let mut input = String::new();
         input_stream.read_line(&mut input);
-
+        if input.trim() == "" {
+            return;
+        }
         let mut prt = input.trim().split_whitespace();
         let cmd = match prt.next() {
             Some(n) => n,

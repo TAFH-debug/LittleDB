@@ -11,9 +11,6 @@ struct Args {
     ///Mode of application start. "web" or "local".
     #[clap(short, long, default_value = "local")]
     mode: String,
-    ///Port that listens to connections.
-    #[clap(short, long, default_value = "5000")]
-    port: u32,
     ///Path to folder where locate database. Absolute or relative.
     #[clap(short, long, default_value = "")]
     folder: String,

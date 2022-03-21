@@ -8,11 +8,6 @@ pub enum Mode {
     LOCAL
 }
 
-pub enum StorageType {
-    TABLE,
-    SINGLE_OBJECTS
-}
-
 thread_local! {
     pub static FOLDER_PATH: RefCell<String> = RefCell::new(String::new());
 }
@@ -38,6 +33,7 @@ pub fn get_tbl_file() -> String {
 }
 pub const FILE_NAME: &str = "data";
 
+pub static mut PORT: u32 = 5000;
 pub static mut MODE: Mode = Mode::NONE;
 pub static CONFIG_FILE: &str = "config.json";
 pub static MAIN_FILE_EXTENSION: &str = "db";

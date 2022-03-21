@@ -4,6 +4,7 @@ use std::io::{stdout, Write};
 use shell_core::*;
 use crate::core::{delete_database, init_database, LDBValue};
 use crate::core::ErrorType;
+use crate::net;
 
 fn exit(_: &[String]) {
     std::process::exit(0);
@@ -20,6 +21,12 @@ fn create_table(args: &[String]) {
     let types = vec_args.remove(0);
     unsafe {
         crate::core::_create_table(table_name, types);
+    }
+}
+
+fn listen(args: &[String]) {
+    unsafe {
+        net::listen(format!("127.0.0.1:{}", crate::PORT));
     }
 }
 
@@ -63,6 +70,7 @@ pub fn start_shell() {
     let mut commands = vec!();
     let mut handler = CommandHandler::new();
 
+    commands.push(Cmd::new("listen", listen));
     commands.push(Cmd::new("exit", exit));
     commands.push(Cmd::new("help", help));
     commands.push(Cmd::new("create", create_table));
