@@ -14,7 +14,7 @@ use super::{
     LDBValue
 };
 
-pub fn read_string(file: &mut File) -> Result<String, ErrorType> {
+pub fn read_string_from_file(file: &mut File) -> Result<String, ErrorType> {
     let mut buf = [0; 8];
     file.read(&mut buf);
     let len = usize::from_be_bytes(buf);
@@ -51,6 +51,81 @@ pub fn is_valid_database() -> Result<bool, ErrorType> {
     let header_s = String::from_utf8(header).unwrap();
 
     Ok(header_s.as_str() == HEADER)
+}
+
+pub fn get_values_binary(name: String) -> Result<(String, Vec<u8>), ErrorType> {
+    let address = get_storage_address(name.clone()).unwrap();
+    let mut result = Vec::new();
+    let header = get_storage_header(name.clone()).unwrap();
+    {
+        let mut file = File::open(get_db_file()).unwrap();
+
+        file.seek(SeekFrom::Start(address + header.len() as u64 + 1));
+        let mut spl = header.split(":");
+        spl.next();
+
+        let values = spl.collect::<Vec<&str>>();
+        let mut mapped_vals: Vec<(String, String)> = vec!();
+
+        for i in values {
+            let mut g = i.split("-");
+            mapped_vals.push((
+                g.next().unwrap().to_string(),
+                g.next().unwrap().to_string()
+            ));
+        }
+
+        loop {
+            let mut check = [0; 1];
+            match file.read(&mut check) {
+                Ok(0) => break,
+                Ok(_) => (),
+                Err(_) => return Err(ErrorType::IO)
+            };
+            if *check.first().unwrap() != OBJECT_SEPARATOR { break; }
+            result.push(OBJECT_SEPARATOR);
+            for i in mapped_vals.clone() {
+                match i.1.as_str() {
+                    "int" => {
+                        let mut buf = [0; 4];
+                        match file.read(&mut buf[..]) {
+                            Ok(0) => return Err(ErrorType::UnexpectedEOF),
+                            Ok(_) => {},
+                            Err(_) => return Err(ErrorType::IO)
+                        }
+                        result.append(&mut Vec::from(buf));
+                    },
+                    "string" => {
+                        let mut buf = [0; 8];
+                        match file.read(&mut buf) {
+                            Ok(_) => {},
+                            Err(_) => return Err(ErrorType::IO)
+                        }
+                        result.append(&mut Vec::from(buf));
+                        for _ in 0..u64::from_be_bytes(buf) {
+                            let mut buf3 = [0; 1];
+                            match file.read(&mut buf3) {
+                                Ok(_) => {},
+                                Err(_) => return Err(ErrorType::IO)
+                            }
+                            result.push(*buf3.first().unwrap());
+                        }
+                    },
+                    "bool" => {
+                        let mut buf = [0; 1];
+                        match file.read(&mut buf) {
+                            Ok(0) => return Err(ErrorType::UnexpectedEOF),
+                            Ok(_) => {},
+                            Err(_) => return Err(ErrorType::IO)
+                        };
+                        result.push(*buf.first().unwrap());
+                    },
+                    _ => return Err(ErrorType::InvalidFormat)
+                }
+            }
+        }
+    }
+    Ok((header, result))
 }
 
 pub fn get_values(name: String) -> Result<Vec<HashMap<String, LDBValue>>, ErrorType> {
@@ -102,7 +177,7 @@ pub fn get_values(name: String) -> Result<Vec<HashMap<String, LDBValue>>, ErrorT
                         );
                     },
                     "string" => {
-                        let strng = match read_string(&mut file) {
+                        let strng = match read_string_from_file(&mut file) {
                             Ok(n) => n,
                             Err(_) => return Err(ErrorType::IO)
                         };

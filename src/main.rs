@@ -10,8 +10,10 @@ mod tests;
 
 #[warn(non_camel_case_types)]
 mod constants;
+mod macros;
 
 pub use constants::*;
+pub use macros::*;
 use std::io::{Error, Read, stdin};
 use std::thread;
 use crate::core::{LDBValue};
