@@ -7,7 +7,7 @@ make
 ```
 #### You need cargo to build the project.
 
-##Goals
+## Goals
 * SQL Parser
 * Finish the implementation of CRUD operations.
 * Add authentication and improve data protection.

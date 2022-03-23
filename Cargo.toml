@@ -7,3 +7,4 @@ authors = ["TAFH"]
 [dependencies]
 clap = { version = "3.0.13", features = ["derive"] }
 json = "0.12.4"
+log  = "0.4.16"
