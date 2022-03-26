@@ -1,10 +1,8 @@
-mod shell_core;
-
-use std::io::{stdout, Write};
-use shell_core::*;
-use crate::core::{delete_database, init_database, LDBValue};
-use crate::core::ErrorType;
+use crate::core::core::{LDBValue, ErrorType};
+use crate::core::data_wrt::{delete_database, init_database};
 use crate::net;
+use std::io::{stdout, Write};
+use super::shell_core::*;
 
 fn exit(_: &[String]) {
     std::process::exit(0);
@@ -20,13 +18,13 @@ fn create_table(args: &[String]) {
     let table_name = vec_args.remove(0);
     let types = vec_args.remove(0);
     unsafe {
-        crate::core::_create_table(table_name, types);
+        crate::core::data_wrt::_create_table(table_name, types);
     }
 }
 
 fn listen(args: &[String]) {
     unsafe {
-        net::listen(format!("127.0.0.1:{}", crate::PORT));
+        net::listener::listen(format!("127.0.0.1:{}", *crate::constants::PORT.lock().unwrap()));
     }
 }
 
@@ -44,19 +42,19 @@ fn insert_values(args: &[String]) {
             "int" => values.push(LDBValue::INT(tv.1.parse::<i32>().unwrap())),
             "string" => values.push(LDBValue::STRING(tv.1.to_string())),
             "bool" => values.push(LDBValue::BOOL(tv.1.parse::<bool>().unwrap())),
-            _ => println!("Type {} doesn't exists.", tv.0)
+            _ => println!("Type {} doesn't exists.", tv.0),
         }
     }
 
-    match crate::env::insert_values(table_name, values) {
-        Ok(_) => {},
+    match crate::env::env::insert_values(table_name, values) {
+        Ok(_) => {}
         Err(ErrorType::TypeMismatch) => println!("Type mismatch."),
-        Err(_) => println!("unknown error")
+        Err(_) => println!("unknown error"),
     }
 }
 
 fn get_values(args: &[String]) {
-    let data = crate::core::get_values(args.first().unwrap().to_string()).unwrap();
+    let data = crate::core::data_read::get_values(args.first().unwrap().to_string()).unwrap();
     println!("{:#?}", data);
 }
 
@@ -67,7 +65,7 @@ fn restart_db(_: &[String]) {
 }
 
 pub fn start_shell() {
-    let mut commands = vec!();
+    let mut commands = vec![];
     let mut handler = CommandHandler::new();
 
     commands.push(Cmd::new("listen", listen));
@@ -85,4 +83,3 @@ pub fn start_shell() {
         handler.wait_command();
     }
 }
-

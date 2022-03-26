@@ -1,23 +1,12 @@
-#[path = "env/env.rs"] mod env;
-#[path = "core/core.rs"] mod core;
-#[path = "shell/launcher.rs"] mod launcher;
-#[path = "env/config.rs"] mod config;
-#[path = "shell/cmd_shell/shell.rs"] mod shell;
-#[path = "net/listener.rs"] mod net;
-#[cfg(test)]
-#[path = "../test/tests.rs"]
-mod tests;
+pub mod core;
+pub mod env;
+pub mod net;
+pub mod shell;
+pub mod constants;
+pub mod macros;
 
-#[warn(non_camel_case_types)]
-mod constants;
-mod macros;
+use log::*;
 
-pub use constants::*;
-pub use macros::*;
-use std::io::{Error, Read, stdin, stdout, Write};
-use std::thread;
-use crate::core::{LDBValue};
-pub use log::*;
 
 extern crate log;
 
@@ -36,15 +25,13 @@ impl Log for MainLogger {
     }
 
     fn flush(&self) {
+        //TODO
     }
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<(), ()> {
     log::set_logger(&MAIN_LOGGER);
     log::set_max_level(log::LevelFilter::Info);
-    match launcher::launch() {
-        Ok(_) => {},
-        Err(_) => println!("Unknown error.")
-    }
+    shell::launcher::launch().unwrap_or_else(|_| println!("Unknown error!"));
     return Ok(());
 }

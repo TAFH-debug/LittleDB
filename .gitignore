@@ -6,5 +6,4 @@ data.*
 /target
 config.json
 /.history
-Cargo.lock
 *.py

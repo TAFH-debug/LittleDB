@@ -1,8 +1,10 @@
+use std::borrow::Borrow;
 use std::fmt::Debug;
 use std::path::Path;
 
 extern crate clap;
 use clap::Parser;
+use crate::constants::Mode;
 
 ///SQL-like simple database management system written on rust.
 #[derive(Parser, Debug)]
@@ -16,42 +18,42 @@ struct Args {
     folder: String,
 }
 
-/**
-Launch DBMS.
-*/
-pub fn launch() -> Result<(), String> {
-    crate::config::load();
+///Launch DBMS
+pub fn launch() -> Result<(), ()> {
+    crate::env::config::load();
 
     let args = Args::parse();
 
     match &*args.mode.clone() {
-        "local" => unsafe {
-            crate::MODE = crate::Mode::LOCAL;
+        "local" => {
+            let mut mode = crate::constants::MODE.lock().unwrap();
+            *mode = Mode::LOCAL;
         },
-        "web" => unsafe {
-            crate::MODE = crate::Mode::WEB;
-        }
+        "web" => {
+            let mut mode = crate::constants::MODE.lock().unwrap();
+            *mode = Mode::WEB;
+        },
         _ => {
             println!("Unknown mode!");
-            std::process::exit(0);
+            return Ok(());
         }
     }
 
     if args.folder.clone() == "" {
         println!("Error: Missing required command-line option --folder.");
         println!("For more information try --help.");
-        std::process::exit(0);
+        return Ok(());
     }
     if !Path::new(&args.folder).exists() {
         println!("Error: This path is not exists.");
-        std::process::exit(0);
+        return Ok(());
     }
 
-    crate::FOLDER_PATH.with(|g| {
+    crate::constants::FOLDER_PATH.with(|g| {
         g.replace(args.folder.clone());
     });
 
-    crate::shell::start_shell();
+    crate::shell::shell::start_shell();
     //TODO port
     Ok(())
 }
