@@ -1,11 +1,11 @@
 use crate::read_string;
 use std::io::{stdout, Read, Write};
 use std::net::{TcpListener, TcpStream};
-use std::thread;
+
 
 pub fn listen(address: String) {
     println!("Listening at {}", address);
-    stdout().flush();
+    stdout().flush().expect("Stout error");
     let stream = TcpListener::bind(address.clone()).unwrap();
     for i in stream.incoming() {
         let mut i = i.unwrap();
@@ -14,7 +14,7 @@ pub fn listen(address: String) {
 }
 
 pub fn handle_con(stream: &mut TcpStream) {
-    let mut received = Vec::new();
+    let received = Vec::new();
     let mut request_type = [0; 1];
     stream.read(&mut request_type);
     match request_type.first().unwrap() {

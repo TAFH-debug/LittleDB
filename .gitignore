@@ -7,3 +7,4 @@ data.*
 config.json
 /.history
 *.py
+examplesql.txt
