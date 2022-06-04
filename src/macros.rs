@@ -13,3 +13,14 @@ macro_rules! read_string {
         String::from_utf8(vec_str).unwrap()
     }};
 }
+
+/// Checks the result and returns error if result is error.
+#[macro_export]
+macro_rules! check_error_f {
+    ($func:expr) => {
+        match $func {
+            Ok(n) => n,
+            Err(n) => return Err(n)
+        }
+    };
+}

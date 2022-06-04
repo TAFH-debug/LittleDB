@@ -1,4 +1,9 @@
-pub mod core;
-pub mod data_read;
-pub mod data_wrt;
-pub mod util;
+mod write;
+mod read;
+mod field;
+
+pub use field::*;
+pub use write::*;
+pub use read::*;
+
+const HEADER: &'static str = "littledb:0.1.0";

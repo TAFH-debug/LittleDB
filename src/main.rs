@@ -6,7 +6,6 @@ pub mod constants;
 pub mod macros;
 pub mod parser;
 
-use std::io::stdin;
 use log::*;
 
 
@@ -32,14 +31,8 @@ impl Log for MainLogger {
 }
 
 fn main() -> Result<(), ()> {
-    let mut buf = String::new();
-    stdin().read_line(&mut buf);
-    //println!("{:#?}", parse_expr(buf));
-    Ok(())
-    /*
-    set_logger(&MAIN_LOGGER);
+    set_logger(&MAIN_LOGGER).expect("TODO: panic message");
     set_max_level(LevelFilter::Info);
     shell::launcher::launch().unwrap_or_else(|_| println!("Unknown error!"));
     return Ok(());
-    */
 }
