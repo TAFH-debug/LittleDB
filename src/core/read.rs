@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
-use crate::check_error_f;
-use crate::core::get_type_by_code;
+use crate::{check_error_e, check_error_f};
+use crate::core::{Field, get_type_by_code, Object};
 use super::field::Type;
 
 struct TableReader<'a> {
@@ -20,6 +20,38 @@ impl<'a> TableReader<'a> {
             file
         }
     }
+
+    pub fn read_object(&mut self) -> Result<Object, String> {
+        let mut res = Vec::new();
+        for i in self.types {
+            let temp = match i {
+                Type::INT => {
+                    let mut buf = [0; 4];
+                    check_error_e!(self.file.read(&mut buf));
+                    Field::Int(i32::from_be_bytes(buf))
+                },
+                Type::STRING => {
+                    let mut size_b = [0; 4];
+                    check_error_e!(self.file.read(&mut size_b));
+                    let size = u32::from_be_bytes(size_b);
+                    let mut buf = Vec::new();
+                    for _ in 0..size as usize {
+                        let mut buf2 = [0; 1];
+                        check_error_e!(self.file.read(&mut buf));
+                        buf.push(*buf2.first().unwrap());
+                    }
+                    Field::String(String::from_utf8(buf).unwrap())
+                },
+                Type::BOOL => {
+                    let mut buf = [0; 1];
+                    check_error_e!(self.file.read(&mut buf));
+                    Field::Bool(*buf.first().unwrap() != 0)
+                }
+            };
+            res.push(temp);
+        }
+        Ok(Object::new(res))
+    }
 }
 
 struct DBReader {
@@ -31,16 +63,12 @@ impl DBReader {
     pub fn load(&mut self) -> Result<(), String> {
         let mut buf = [0; super::HEADER.len()];
 
-        let res = match self.file.read(&mut buf) {
-            Ok(0) => Err("Unexpected EOF".to_string()),
-            Ok(_) => Ok(()),
-            Err(n) => Err(n.to_string())
-        };
+        check_error_e!(self.file.read(&mut buf));
         self.header = String::from_utf8(Vec::from(buf)).unwrap();
-        res
+        Ok(())
     }
 
-    pub fn new(inner: File) -> DBReader {
+    pub fn new(inner: File) -> Self {
         Self {
             header: String::new(),
             file: inner
@@ -75,10 +103,7 @@ impl DBReader {
 
         let length = {
             let mut buf = [0; 8];
-            match self.file.read(&mut buf) {
-                Ok(_) => (),
-                Err(n) => return Err(n.to_string()),
-            }
+            check_error_e!(self.file.read(&mut buf));
             u64::from_be_bytes(buf)
         };
 
@@ -99,11 +124,7 @@ impl DBReader {
 
     pub fn read(&mut self) -> Result<u8, String> {
         let mut buf = [0; 1];
-        match self.file.read(&mut buf) {
-            Ok(0) => return Err("Unexpected EOF".to_string()),
-            Ok(_) => (),
-            Err(n) => return Err(n.to_string()),
-        }
+        check_error_e!(self.file.read(&mut buf))
         Ok(*buf.first().unwrap())
     }
 }

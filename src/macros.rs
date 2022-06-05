@@ -24,3 +24,14 @@ macro_rules! check_error_f {
         }
     };
 }
+
+#[macro_export]
+macro_rules! check_error_e {
+    ($func:expr) => {
+        match $func {
+            Ok(0) => return Err("Unexpected EOF".to_string()),
+            Ok(n) => (),
+            Err(n) => return Err(n.to_string())
+        }
+    };
+}
