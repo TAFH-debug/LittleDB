@@ -22,6 +22,14 @@ impl Object {
     }
 }
 
+pub fn get_code_by_type(_type: Type) -> u8 {
+    match _type {
+        Type::INT => 0,
+        Type::BOOL => 1,
+        Type::STRING => 2
+    }
+}
+
 pub fn get_type_by_code(code: u8) -> Type {
     match code {
         0 => Type::INT,

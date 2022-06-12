@@ -56,7 +56,8 @@ impl<'a> TableReader<'a> {
 
 struct DBReader {
     file: File,
-    header: String
+    header: String,
+    is_loaded: bool
 }
 
 impl DBReader {
@@ -65,17 +66,20 @@ impl DBReader {
 
         check_error_e!(self.file.read(&mut buf));
         self.header = String::from_utf8(Vec::from(buf)).unwrap();
+        self.is_loaded = true;
         Ok(())
     }
 
     pub fn new(inner: File) -> Self {
         Self {
             header: String::new(),
-            file: inner
+            file: inner,
+            is_loaded: false
         }
     }
 
     pub fn read_table(&mut self) -> Result<TableReader, String> {
+        if !self.is_loaded { return Err("Reader is not loaded!".to_string()) }
         let l1 = match self.read() {
             Ok(n) => n,
             Err(n) => return Err(n)
@@ -124,7 +128,7 @@ impl DBReader {
 
     pub fn read(&mut self) -> Result<u8, String> {
         let mut buf = [0; 1];
-        check_error_e!(self.file.read(&mut buf))
+        check_error_e!(self.file.read(&mut buf));
         Ok(*buf.first().unwrap())
     }
 }

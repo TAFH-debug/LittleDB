@@ -10,6 +10,7 @@ use log::*;
 
 
 extern crate log;
+extern crate core;
 
 struct MainLogger;
 static MAIN_LOGGER: MainLogger = MainLogger;
@@ -26,7 +27,7 @@ impl Log for MainLogger {
     }
 
     fn flush(&self) {
-        //TODO
+        //does nothing
     }
 }
 
