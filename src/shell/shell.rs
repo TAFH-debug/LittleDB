@@ -1,5 +1,3 @@
-use crate::core::core::{LDBValue, ErrorType};
-use crate::core::data_wrt::{delete_database, init_database};
 use crate::net;
 use std::io::{stdout, Write};
 use super::shell_core::*;
@@ -39,28 +37,28 @@ fn insert_values(args: &[String]) {
     for i in splitted {
         let tv = i.split_once("-").unwrap();
         match tv.0 {
-            "int" => values.push(LDBValue::INT(tv.1.parse::<i32>().unwrap())),
-            "string" => values.push(LDBValue::STRING(tv.1.to_string())),
-            "bool" => values.push(LDBValue::BOOL(tv.1.parse::<bool>().unwrap())),
+            //"int" => values.push(LDBValue::INT(tv.1.parse::<i32>().unwrap())),
+            //"string" => values.push(LDBValue::STRING(tv.1.to_string())),
+            //"bool" => values.push(LDBValue::BOOL(tv.1.parse::<bool>().unwrap())),
             _ => println!("Type {} doesn't exists.", tv.0),
         }
     }
 
     match crate::env::env::insert_values(table_name, values) {
         Ok(_) => {}
-        Err(ErrorType::TypeMismatch) => println!("Type mismatch."),
+       // Err(ErrorType::TypeMismatch) => println!("Type mismatch."),
         Err(_) => println!("unknown error"),
     }
 }
 
 fn get_values(args: &[String]) {
-    let data = crate::core::data_read::get_values(args.first().unwrap().to_string()).unwrap();
-    println!("{:#?}", data);
+    //let data = crate::core::data_read::get_values(args.first().unwrap().to_string()).unwrap();
+    //println!("{:#?}", data); TODO
 }
 
 fn restart_db(_: &[String]) {
-    delete_database();
-    init_database();
+    //delete_database();
+    //init_database();
     println!("Done.");
 }
 

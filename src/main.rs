@@ -10,7 +10,6 @@ use log::*;
 
 
 extern crate log;
-extern crate core;
 
 struct MainLogger;
 static MAIN_LOGGER: MainLogger = MainLogger;
