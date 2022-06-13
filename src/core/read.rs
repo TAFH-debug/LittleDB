@@ -2,17 +2,16 @@ use std::fs::File;
 use std::io::Read;
 use crate::{check_error_e, check_error_f};
 use crate::core::{Field, get_type_by_code, Object};
-use super::field::Type;
 
 struct TableReader<'a> {
     name: String,
-    types: Vec<Type>,
+    types: Vec<Field>,
     lenght: u64,
     file: &'a File
 }
 
 impl<'a> TableReader<'a> {
-    fn new(name: String, types: Vec<Type>, lenght: u64, file: &'a File) -> Self {
+    fn new(name: String, types: Vec<Field>, lenght: u64, file: &'a File) -> Self {
         Self {
             name,
             types,
@@ -25,12 +24,12 @@ impl<'a> TableReader<'a> {
         let mut res = Vec::new();
         for i in self.types {
             let temp = match i {
-                Type::INT => {
+                Field::Int(_) => {
                     let mut buf = [0; 4];
                     check_error_e!(self.file.read(&mut buf));
                     Field::Int(i32::from_be_bytes(buf))
                 },
-                Type::STRING => {
+                Field::String(_) => {
                     let mut size_b = [0; 4];
                     check_error_e!(self.file.read(&mut size_b));
                     let size = u32::from_be_bytes(size_b);
@@ -42,7 +41,7 @@ impl<'a> TableReader<'a> {
                     }
                     Field::String(String::from_utf8(buf).unwrap())
                 },
-                Type::BOOL => {
+                Field::Bool(_) => {
                     let mut buf = [0; 1];
                     check_error_e!(self.file.read(&mut buf));
                     Field::Bool(*buf.first().unwrap() != 0)

@@ -1,7 +1,7 @@
 use std::fs::{File};
 use std::io::{Read, Write};
 use crate::{check_error_e, check_error_f};
-use crate::core::{get_code_by_type, Type};
+use crate::core::{get_code_by_type, Object};
 use super::HEADER;
 
 struct DBWriter {
@@ -44,5 +44,9 @@ impl DBWriter {
         all.append(&mut vec![0, 0, 0, 0, 0, 0, 0, 0]);
         check_error_e!(self.file.write(all.as_slice()));
         Ok(())
+    }
+
+    pub fn create_object(&mut self, data: Object, tbl_name: String) -> Result<(), String> {
+        todo!()
     }
 }
